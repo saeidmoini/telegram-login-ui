@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Login to Telegram</h2>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="api_id">API ID:</label>
+                <input type="text" class="form-control" id="api_id" name="api_id" required>
+            </div>
+            <div class="form-group">
+                <label for="api_hash">API Hash:</label>
+                <input type="text" class="form-control" id="api_hash" name="api_hash" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" class="form-control" id="phone" name="phone" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Code</button>
+        </form>
+
+        <div id="codeSection" class="mt-4" style="display:none;">
+            <h3>Enter Verification Code</h3>
+            <form id="codeForm">
+                <div class="form-group">
+                    <label for="code">Verification Code:</label>
+                    <input type="text" class="form-control" id="code" name="code" required>
+                </div>
+                <button type="submit" class="btn btn-success">Verify Code</button>
+            </form>
+        </div>
+        <div id="passwordSection" class="mt-4" style="display:none;">
+            <h3>Enter Two-Step Verification Password</h3>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-success">Verify Password</button>
+            </form>
+        </div>
+
+
+        <div id="message" class="mt-4"></div>
+    </div>
+
+<script>
+   $(document).ready(function() {
+    $('#loginForm').on('submit', function(event) {
+        event.preventDefault();
+        const formData = $(this).serialize();
+        $.post('/login', formData, function(response) {
+            $('#message').text(response.message).removeClass('text-danger').addClass('text-success');
+            document.cookie = `token=${response.token}; path=/;`;
+            if (!response.logged_in) {
+                $('#codeSection').show(); // Show verification code input
+            }else{
+                window.location.href = '/forward_messages';
+            }
+        }).fail(function(response) {
+            const errorMessage = response.responseJSON?.error || "An unknown error occurred.";
+            $('#message').text(errorMessage).removeClass('text-success').addClass('text-danger');
+        });
+    });
+
+    $('#codeForm').on('submit', function(event) {
+        event.preventDefault();
+        const formData = $(this).serialize();
+        $.post('/verify_code', formData, function(response) {
+            $('#message').text(response.message).removeClass('text-danger').addClass('text-success');
+            if (response.password_needed) {
+                $('#passwordSection').show(); // Show password input if needed
+            }else if(response.logged_in){
+                window.location.href = '/forward_messages';
+            }
+        }).fail(function(response) {
+            const errorMessage = response.responseJSON?.error || "An unknown error occurred.";
+            $('#message').text(errorMessage).removeClass('text-success').addClass('text-danger');
+        });
+    });
+
+    $('#passwordForm').on('submit', function(event) {
+        event.preventDefault();
+        const formData = $(this).serialize();
+        $.post('/verify_password', formData, function(response) {
+            $('#message').text(response.message).removeClass('text-danger').addClass('text-success');
+            if(response.logged_in){
+                window.location.href = '/forward_messages';
+            }
+        }).fail(function(response) {
+            const errorMessage = response.responseJSON?.error || "An unknown error occurred.";
+            $('#message').text(errorMessage).removeClass('text-success').addClass('text-danger');
+        });
+    });
+});
+</script>
+
+</body>
+</html>
