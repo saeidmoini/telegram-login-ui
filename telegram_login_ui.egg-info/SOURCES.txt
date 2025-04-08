@@ -1,0 +1,7 @@
+README.md
+setup.py
+telegram_login_ui.egg-info/PKG-INFO
+telegram_login_ui.egg-info/SOURCES.txt
+telegram_login_ui.egg-info/dependency_links.txt
+telegram_login_ui.egg-info/requires.txt
+telegram_login_ui.egg-info/top_level.txt
