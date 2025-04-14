@@ -12,7 +12,7 @@ from telethon.errors import (
 import json
 import shutil
 import os
-from tg_login.logger import logger
+from .logger import logger
 import asyncio
 from dotenv import load_dotenv, set_key
 from pathlib import Path
