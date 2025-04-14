@@ -93,7 +93,7 @@
         $.post('/verify_password', formData, function(response) {
             $('#message').text(response.message).removeClass('text-danger').addClass('text-success');
             if(response.logged_in){
-                window.location.href = '/forward_messages';
+                location.reload();
             }
         }).fail(function(response) {
             const errorMessage = response.responseJSON?.error || "An unknown error occurred.";
