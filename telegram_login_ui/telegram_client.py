@@ -21,8 +21,8 @@ db_lock = asyncio.Lock()
 
 def save_to_env(key, value):
     # Create the .env file if it doesn't exist
-    current_dir = Path(__file__).parent
-    env_file = current_dir / ".env"
+    #current_dir = Path(__file__).parent
+    env_file = os.getcwd() / ".env"
     env_file.touch(mode=0o600, exist_ok=True)
 
     # Save the key-value pair to the .env file
@@ -58,7 +58,7 @@ class TelegramClientHandler:
                 self.client = TelegramClient(self.new_session, self.api_id, self.api_hash)
             else:
                 data = json.dumps({'api_id': self.api_id, 'api_hash': self.api_hash})
-                save_to_env(self.phone, data )
+                save_to_env(self.phone, data)
                 self.client = TelegramClient(self.phone, self.api_id, self.api_hash)
 
         except Exception as e:
@@ -85,7 +85,7 @@ class TelegramClientHandler:
 
     def __session_pars(self):
         try:
-            load_dotenv()
+            load_dotenv(dotenv_path=os.path.join(os.getcwd(), '.env'))
             if os.path.exists(f'{self.phone}.session'):
                 my_data = json.loads(os.environ.get(self.phone))
                 self.api_id = my_data['api_id']
