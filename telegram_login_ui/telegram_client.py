@@ -22,7 +22,8 @@ db_lock = asyncio.Lock()
 def save_to_env(key, value):
     # Create the .env file if it doesn't exist
     #current_dir = Path(__file__).parent
-    env_file = os.getcwd() / ".env"
+
+    env_file = Path(os.getcwd(), '.env')
     env_file.touch(mode=0o600, exist_ok=True)
 
     # Save the key-value pair to the .env file
@@ -85,6 +86,7 @@ class TelegramClientHandler:
 
     def __session_pars(self):
         try:
+            logger.info(os.path.join(os.getcwd(), '.env'))
             load_dotenv(dotenv_path=os.path.join(os.getcwd(), '.env'))
             if os.path.exists(f'{self.phone}.session'):
                 my_data = json.loads(os.environ.get(self.phone))
