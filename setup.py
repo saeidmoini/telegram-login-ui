@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='telegram-login-ui',
-    version='1.0.3',
+    version='1.0.4',
     description='A package to create a simple UI for logging into Telegram accounts and managing sessions.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -16,6 +16,9 @@ setup(
         'telethon>=1.24.0',
         'pyjwt>=2.6.0',
     ],
+    package_data={
+        '': ['templates/*'],  # Include templates in the package
+    },
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',

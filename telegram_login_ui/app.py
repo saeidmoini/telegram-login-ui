@@ -2,7 +2,7 @@ import os
 from flask import request, jsonify, render_template, redirect, url_for, Blueprint, current_app
 from .telegram_client import TelegramClientHandler  # Custom handler for Telegram client
 
-login_bp = Blueprint('login', __name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
+login_bp = Blueprint('login', __name__,  template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 login_bp.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
 # Route for the home page
 @login_bp.route('/')
