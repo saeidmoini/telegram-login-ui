@@ -86,7 +86,6 @@ class TelegramClientHandler:
 
     def __session_pars(self):
         try:
-            logger.info(os.path.join(os.getcwd(), '.env'))
             load_dotenv(dotenv_path=os.path.join(os.getcwd(), '.env'))
             if os.path.exists(f'{self.phone}.session'):
                 my_data = json.loads(os.environ.get(self.phone))
