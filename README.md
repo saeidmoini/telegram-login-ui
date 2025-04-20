@@ -31,7 +31,7 @@ pip install git+https://github.com/saeidmoini/telegram-login-ui
 To integrate the login functionality, register the `login_bp` blueprint in your Flask app:
 
 ```python
-from tg_login import login_bp
+from telegram_login_ui import login_bp
 
 # Configure the success URL after login
 app.config['SUCCESS_URL'] = 'example_success'
@@ -89,8 +89,8 @@ Here’s a complete example of how to use the package:
 
 ```python
 from flask import Flask, request, render_template
-from tg_login import login_bp
-from tg_login import TelegramClientHandler
+from telegram_login_ui import login_bp
+from telegram_login_ui import TelegramClientHandler
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
