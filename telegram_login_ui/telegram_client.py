@@ -19,16 +19,7 @@ from pathlib import Path
 
 db_lock = asyncio.Lock()
 
-def save_to_env(key, value):
-    # Create the .env file if it doesn't exist
-    #current_dir = Path(__file__).parent
 
-    env_file = Path(os.getcwd(), '.env')
-    env_file.touch(mode=0o600, exist_ok=True)
-
-    # Save the key-value pair to the .env file
-    set_key(dotenv_path=env_file, key_to_set=key, value_to_set=value)
-    os.environ[key] = value
 
 class TelegramClientHandler:
     def __init__(self, SECRET_KEY, **kwargs):
@@ -38,6 +29,8 @@ class TelegramClientHandler:
         self.data = kwargs.get('data', False)
         self.SECRET_KEY = SECRET_KEY
         self.new_session = False
+        self.sessions_path = Path(os.getcwd(), "sessions")
+        self.sessions_path.mkdir(parents=True, exist_ok=True)
 
         if self.data:
             self.phone = self.data[0]
@@ -59,11 +52,20 @@ class TelegramClientHandler:
                 self.client = TelegramClient(self.new_session, self.api_id, self.api_hash)
             else:
                 data = json.dumps({'api_id': self.api_id, 'api_hash': self.api_hash})
-                save_to_env(self.phone, data)
-                self.client = TelegramClient(self.phone, self.api_id, self.api_hash)
+                self.save_to_env(self.phone, data)
+                self.new_session  = Path(self.sessions_path, self.phone)
+                self.client = TelegramClient(self.new_session, self.api_id, self.api_hash)
 
         except Exception as e:
             logger.error(f"Telegram Cliend Starter : {e}")
+
+    def save_to_env(self, key, value):
+        env_file = Path(self.sessions_path, '.env')
+        env_file.touch(mode=0o600, exist_ok=True)
+
+        # Save the key-value pair to the .env file
+        set_key(dotenv_path=env_file, key_to_set=key, value_to_set=value)
+        os.environ[key] = value
 
     async def ensure_client_connected(self):
         if self.client is not None and not self.client.is_connected():
@@ -86,8 +88,9 @@ class TelegramClientHandler:
 
     def __session_pars(self):
         try:
-            load_dotenv(dotenv_path=os.path.join(os.getcwd(), '.env'))
-            if os.path.exists(f'{self.phone}.session'):
+
+            load_dotenv(dotenv_path=os.path.join(self.sessions_path, '.env'))
+            if os.path.exists(f'{self.sessions_path}/{self.phone}.session'):
                 my_data = json.loads(os.environ.get(self.phone))
                 self.api_id = my_data['api_id']
                 self.api_hash = my_data['api_hash']
@@ -111,17 +114,17 @@ class TelegramClientHandler:
 
     async def __create_new_session(self):
         session_number = 1  # Start from _2
-        base = self.phone + ".session"
+        base = Path(self.sessions_path , self.phone + ".session")
 
         # Check if the file with the desired name already exists
-        while os.path.exists(f"{self.phone}+{session_number}.session"):
+        while os.path.exists(f"{self.sessions_path}/{self.phone}+{session_number}.session"):
             session_number += 1  # Increment the number until a unique name is found
 
-        new_session_name = f"{self.phone}+{session_number}.session"
+        new_session_name = f"{self.sessions_path}/{self.phone}+{session_number}.session"
 
         await self.__copy_session(new_session_name, base)
 
-        self.new_session = f"{self.phone}+{session_number}"
+        self.new_session = f"{self.sessions_path}/{self.phone}+{session_number}"
 
         return self.new_session
 
@@ -138,7 +141,7 @@ class TelegramClientHandler:
         code_request = await self.client.send_code_request(self.phone)
         data = json.dumps(
             {'api_id': self.api_id, 'api_hash': self.api_hash, 'phone_code_hash': code_request.phone_code_hash})
-        save_to_env(self.phone, data)
+        self.save_to_env(self.phone, data)
         await self.client.disconnect()
         return {'message': 'Code sent. Please check your phone.', 'logged_in': False, 'token': self.token}
 

@@ -1,5 +1,7 @@
 .env
-
+success.html
+test.py
+*.session
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -7,9 +9,6 @@ __pycache__/
 
 # C extensions
 *.so
-success.html
-test.py
-*.session
 # Distribution / packaging
 .Python
 build/
