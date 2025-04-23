@@ -96,7 +96,11 @@ class TelegramClientHandler:
                 self.api_hash = my_data['api_hash']
                 if my_data.get('phone_code_hash') is not None:
                     self.phone_code_hash = my_data['phone_code_hash']
-                self.new_session = asyncio.run(self.__create_new_session())
+                # جایگزین امن برای asyncio.run()
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                self.new_session = loop.run_until_complete(self.__create_new_session())
+                loop.close()
             else:
                 logger.error('Session dosent exist')
                 return None
