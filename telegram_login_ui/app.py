@@ -1,9 +1,14 @@
 import os
 from flask import request, jsonify, render_template, redirect, url_for, Blueprint, current_app
 from .telegram_client import TelegramClientHandler  # Custom handler for Telegram client
+from dotenv import load_dotenv
+
 
 login_bp = Blueprint('login', __name__,  template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
+load_dotenv()
 login_bp.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
+api_id = os.getenv('api_id')
+api_hash = os.getenv('api_hash')
 # Route for the home page
 @login_bp.route('/')
 def index():
@@ -21,10 +26,8 @@ def index():
 # Route for login
 @login_bp.route('/login', methods=['POST'])
 def login():
-    api_id = request.form['api_id']
-    api_hash = request.form['api_hash']
     phone = request.form['phone']
-    handler = TelegramClientHandler(login_bp.secret_key, api_id=api_id, api_hash=api_hash, phone=phone)
+    handler = TelegramClientHandler(login_bp.secret_key, phone=phone)
     response = handler.login()
     return jsonify(response)
 

@@ -18,11 +18,10 @@ from dotenv import load_dotenv, set_key
 from pathlib import Path
 
 db_lock = asyncio.Lock()
-
-
-
 class TelegramClientHandler:
     def __init__(self, SECRET_KEY, **kwargs):
+        self.api_id = os.getenv('api_id')
+        self.api_hash = os.getenv('api_hash')
         self.phone_code_hash = None
         self.client = None
         self.token = kwargs.get('token', False)
@@ -40,19 +39,15 @@ class TelegramClientHandler:
             self.phone = payload['phone']
             self.__session_pars()
         else:
-            self.api_id = kwargs.get('api_id')
-            self.api_hash = kwargs.get('api_hash')
             self.phone = kwargs.get('phone')
             self.token = self.__generate_token()
-
+        self.phone_code_hash = os.getenv(self.phone, None)
         try:
             loop = asyncio.new_event_loop()  # Create a new event loop
             asyncio.set_event_loop(loop)
             if self.new_session:
                 self.client = TelegramClient(self.new_session, self.api_id, self.api_hash)
             else:
-                data = json.dumps({'api_id': self.api_id, 'api_hash': self.api_hash})
-                self.save_to_env(self.phone, data)
                 self.new_session  = Path(self.sessions_path, self.phone)
                 self.client = TelegramClient(self.new_session, self.api_id, self.api_hash)
 
@@ -60,12 +55,27 @@ class TelegramClientHandler:
             logger.error(f"Telegram Cliend Starter : {e}")
 
     def save_to_env(self, key, value):
-        env_file = Path(self.sessions_path, '.env')
-        env_file.touch(mode=0o600, exist_ok=True)
+        try:
+            env_path = Path.cwd() / '.env'
 
-        # Save the key-value pair to the .env file
-        set_key(dotenv_path=env_file, key_to_set=key, value_to_set=value)
-        os.environ[key] = value
+            if env_path.exists() and env_path.is_dir():
+                raise IsADirectoryError(f"{env_path} is a directory, not a file.")
+
+                # If the file doesn't exist, create it
+            if not env_path.exists():
+                env_path = Path.cwd() / '.env'
+                # Ensure that .env is not a directory
+                if env_path.is_dir():
+                    raise IsADirectoryError(f"{env_path} is a directory, not a file.")
+                env_path.touch(mode=0o600, exist_ok=True)
+
+            # Save the key-value pair to the .env file
+            set_key(dotenv_path=str(env_path), key_to_set=key, value_to_set=value)
+            os.environ[key] = value
+
+        except Exception as e:
+            logger.error(f"Error saving to .env: {e}")
+            raise
 
     async def ensure_client_connected(self):
         if self.client is not None and not self.client.is_connected():
@@ -88,14 +98,8 @@ class TelegramClientHandler:
 
     def __session_pars(self):
         try:
-
-            load_dotenv(dotenv_path=os.path.join(self.sessions_path, '.env'))
-            if os.path.exists(f'{self.sessions_path}/{self.phone}.session'):
-                my_data = json.loads(os.environ.get(self.phone))
-                self.api_id = my_data['api_id']
-                self.api_hash = my_data['api_hash']
-                if my_data.get('phone_code_hash') is not None:
-                    self.phone_code_hash = my_data['phone_code_hash']
+            session_file = os.path.join(self.sessions_path, f"{self.phone}.session")
+            if os.path.exists(session_file):
                 # جایگزین امن برای asyncio.run()
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -143,9 +147,8 @@ class TelegramClientHandler:
             return {'message': f'Already logged in as {me.first_name}.', 'logged_in': True, 'token': self.token}
 
         code_request = await self.client.send_code_request(self.phone)
-        data = json.dumps(
-            {'api_id': self.api_id, 'api_hash': self.api_hash, 'phone_code_hash': code_request.phone_code_hash})
-        self.save_to_env(self.phone, data)
+        phone_code_hash = code_request.phone_code_hash
+        self.save_to_env(self.phone, phone_code_hash)
         await self.client.disconnect()
         return {'message': 'Code sent. Please check your phone.', 'logged_in': False, 'token': self.token}
 
